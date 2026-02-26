@@ -3,26 +3,47 @@
 <head>
   <title>Court Case Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial; text-align:center; margin-top:50px; }
+    button { padding:10px 20px; font-size:16px; margin:5px; cursor:pointer; }
+    input { padding:10px; width:250px; }
+    .feature { margin-top:20px; display:none; }
+    .feature a { display:block; margin:5px; font-size:18px; color:blue; text-decoration:none; }
+  </style>
 </head>
-
-<body style="font-family: Arial; text-align:center; margin-top:100px;">
+<body>
 
   <h1>Welcome to Court Case Manager</h1>
 
-  <button onclick="login()" style="padding:10px 20px; font-size:16px;">
-    Login with Google
-  </button>
+  <!-- Login Section -->
+  <button id="loginBtn" onclick="login()">Login with Google</button>
 
+  <!-- Court Name Input -->
+  <div id="courtNameDiv" class="feature">
+    <input type="text" id="courtNameInput" placeholder="Enter your Court Name">
+    <button onclick="saveCourtName()">Save Court Name</button>
+  </div>
+
+  <!-- Main Features -->
+  <div id="mainFeatures" class="feature">
+    <h2>Main Features</h2>
+    <a href="#" id="allCasesLink">All Cases (Excel Style)</a>
+    <a href="#" id="orderSheetLink">Order Sheet Maker</a>
+    <a href="#" id="noticeMakerLink">Notice Maker</a>
+  </div>
+
+  <!-- Firebase SDK -->
   <script type="module">
-    // Import Firebase App
+
+    // Import Firebase
     import { initializeApp } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-
-    // Import Firebase Auth
-    import { getAuth, GoogleAuthProvider, signInWithPopup } 
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } 
+      from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-    // Your Firebase configuration
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyC4XtFoWYizUUVlhI5pQqwbxcxmjOwyWY0",
       authDomain: "court-case-manager-99e61.firebaseapp.com",
@@ -34,12 +55,11 @@
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-
-    // Initialize Auth
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // Login function
+    // Login Function
     window.login = function() {
       signInWithPopup(auth, provider)
         .then((result) => {
@@ -49,6 +69,46 @@
           alert("Error: " + error.message);
         });
     };
+
+    // Show court name input and features after login
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("loginBtn").style.display = "none";
+        document.getElementById("courtNameDiv").style.display = "block";
+        document.getElementById("mainFeatures").style.display = "block";
+      } else {
+        document.getElementById("loginBtn").style.display = "block";
+        document.getElementById("courtNameDiv").style.display = "none";
+        document.getElementById("mainFeatures").style.display = "none";
+      }
+    });
+
+    // Save Court Name
+    window.saveCourtName = async function() {
+      const courtName = document.getElementById("courtNameInput").value.trim();
+      const user = auth.currentUser;
+
+      if (!courtName) {
+        alert("Please enter court name");
+        return;
+      }
+
+      if (user) {
+        await setDoc(doc(db, "users", user.uid), {
+          email: user.email,
+          courtName: courtName
+        });
+        alert("Court name saved successfully!");
+      } else {
+        alert("User not logged in!");
+      }
+    };
+
+    // Placeholder links for future pages
+    document.getElementById("allCasesLink").onclick = () => alert("All Cases page coming soon");
+    document.getElementById("orderSheetLink").onclick = () => alert("Order Sheet page coming soon");
+    document.getElementById("noticeMakerLink").onclick = () => alert("Notice Maker page coming soon");
+
   </script>
 
 </body>
