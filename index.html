@@ -14,7 +14,6 @@
   </button>
 
   <script type="module">
-
     // Import Firebase App
     import { initializeApp } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
@@ -25,7 +24,7 @@
 
     // Your Firebase configuration
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
+      apiKey: "AIzaSyC4XtFoWYizUUVlhI5pQqwbxcxmjOwyWY0",
       authDomain: "court-case-manager-99e61.firebaseapp.com",
       projectId: "court-case-manager-99e61",
       storageBucket: "court-case-manager-99e61.firebasestorage.app",
@@ -36,7 +35,7 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
 
-    // Setup Authentication
+    // Initialize Auth
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
@@ -50,7 +49,6 @@
           alert("Error: " + error.message);
         });
     };
-
   </script>
 
 </body>
