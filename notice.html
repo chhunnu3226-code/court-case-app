@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Notice Maker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div id="topBar">
+    <div id="userInfo">
+      <img id="userPhoto" src="" alt="User Photo">
+      <span id="userName"></span>
+    </div>
+    <div id="courtNameDisplay"></div>
+  </div>
+
+  <!-- Main container -->
+  <div class="container">
+    <h2>Notice Maker</h2>
+
+    <!-- Instructions -->
+    <p>Select a notice type to generate:</p>
+
+    <!-- Notice buttons -->
+    <div id="noticeOptions" style="display:flex; flex-direction:column; align-items:center;">
+      <button onclick="goToNotice('vadi.html')">Vadi Notice</button>
+      <button onclick="goToNotice('vipakshi.html')">Vipakshi Notice</button>
+      <button onclick="goToNotice('summon.html')">Summon</button>
+      <button onclick="goToNotice('bw.html')">BW (Bailable Warrant)</button>
+      <button onclick="goToNotice('nbw.html')">NBW</button>
+      <button onclick="goToNotice('82.html')">Section 82</button>
+      <button onclick="goToNotice('83.html')">Section 83</button>
+      <button onclick="goToNotice('jamin.html')">Notice to Jamin</button>
+      <button onclick="goToNotice('lok-adalat.html')">Lok Adalat Notice</button>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="#">Link 1</a>
+      <a href="#">Link 2</a>
+      <a href="#">Link 3</a>
+      <a href="#">Link 4</a>
+      <a href="#">Link 5</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 Court Case Manager | All rights reserved</div>
+  </footer>
+
+  <!-- Firebase + JS -->
+  <script type="module">
+    import { initializeApp } 
+      from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } 
+      from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } 
+      from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC4XtFoWYizUUVlhI5pQqwbxcxmjOwyWY0",
+      authDomain: "court-case-manager-99e61.firebaseapp.com",
+      projectId: "court-case-manager-99e61",
+      storageBucket: "court-case-manager-99e61.firebasestorage.app",
+      messagingSenderId: "446835586016",
+      appId: "1:446835586016:web:57083df006340ca4173185"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Show user info and court name
+    onAuthStateChanged(auth, async (user) => {
+      if(user){
+        document.getElementById("userInfo").style.display = "flex";
+        document.getElementById("userName").textContent = user.displayName;
+
+        // Fetch court name
+        const docRef = doc(db,"users",user.uid);
+        const docSnap = await getDoc(docRef);
+        if(docSnap.exists() && docSnap.data().courtName){
+          document.getElementById("courtNameDisplay").textContent = docSnap.data().courtName;
+        }
+      } else {
+        alert("User not logged in! Redirecting to main page.");
+        // window.location.href = "index.html"; // Uncomment later
+      }
+    });
+
+    // Go to individual notice page
+    function goToNotice(page){
+      alert("Going to " + page); // Placeholder, later replace with:
+      // window.location.href = page;
+    }
+  </script>
+
+</body>
+</html>
