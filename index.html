@@ -3,47 +3,50 @@
 <head>
   <title>Court Case Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial; text-align:center; margin-top:50px; }
-    button { padding:10px 20px; font-size:16px; margin:5px; cursor:pointer; }
-    input { padding:10px; width:250px; }
-    .feature { margin-top:20px; display:none; }
-    .feature a { display:block; margin:5px; font-size:18px; color:blue; text-decoration:none; }
-  </style>
+  <!-- CSS will be added later -->
 </head>
 <body>
 
-  <h1>Welcome to Court Case Manager</h1>
-
-  <!-- Login Section -->
-  <button id="loginBtn" onclick="login()">Login with Google</button>
-
-  <!-- Court Name Input -->
-  <div id="courtNameDiv" class="feature">
-    <input type="text" id="courtNameInput" placeholder="Enter your Court Name">
-    <button onclick="saveCourtName()">Save Court Name</button>
+  <!-- Top bar with user info -->
+  <div id="topBar" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #ccc;">
+    <div id="userInfo" style="display:none;">
+      <img id="userPhoto" src="" alt="User Photo" style="width:40px; height:40px; border-radius:50%; vertical-align:middle;">
+      <span id="userName" style="margin-left:10px; font-weight:bold;"></span>
+    </div>
+    <div id="courtNameDisplay" style="display:none; font-weight:bold;"></div>
   </div>
 
-  <!-- Main Features -->
-  <div id="mainFeatures" class="feature">
-    <h2>Main Features</h2>
-    <a href="#" id="allCasesLink">All Cases (Excel Style)</a>
-    <a href="#" id="orderSheetLink">Order Sheet Maker</a>
-    <a href="#" id="noticeMakerLink">Notice Maker</a>
+  <!-- Main content -->
+  <div style="text-align:center; margin-top:50px;">
+
+    <!-- Login Button -->
+    <button id="loginBtn" onclick="login()">Login with Google</button>
+
+    <!-- Court Name Input -->
+    <div id="courtNameDiv" style="display:none; margin-top:20px;">
+      <input type="text" id="courtNameInput" placeholder="Enter your Court Name">
+      <button onclick="saveCourtName()">Save Court Name</button>
+    </div>
+
+    <!-- Main Features -->
+    <div id="mainFeatures" style="display:none; margin-top:30px;">
+      <h2>Main Features</h2>
+      <a href="#" id="allCasesLink">All Cases (Excel Style)</a>
+      <a href="#" id="orderSheetLink">Order Sheet Maker</a>
+      <a href="#" id="noticeMakerLink">Notice Maker</a>
+    </div>
   </div>
 
   <!-- Firebase SDK -->
   <script type="module">
-
-    // Import Firebase
     import { initializeApp } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc } 
+    import { getFirestore, doc, setDoc, getDoc } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-    // Firebase Config
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyC4XtFoWYizUUVlhI5pQqwbxcxmjOwyWY0",
       authDomain: "court-case-manager-99e61.firebaseapp.com",
@@ -70,20 +73,38 @@
         });
     };
 
-    // Show court name input and features after login
-    onAuthStateChanged(auth, (user) => {
+    // Show user info after login
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById("loginBtn").style.display = "none";
-        document.getElementById("courtNameDiv").style.display = "block";
-        document.getElementById("mainFeatures").style.display = "block";
+
+        // Show user name & photo
+        document.getElementById("userInfo").style.display = "flex";
+        document.getElementById("userName").textContent = user.displayName;
+        document.getElementById("userPhoto").src = user.photoURL;
+
+        // Check if court name already exists in Firestore
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().courtName) {
+          document.getElementById("courtNameDisplay").textContent = docSnap.data().courtName;
+          document.getElementById("courtNameDisplay").style.display = "block";
+          document.getElementById("mainFeatures").style.display = "block";
+        } else {
+          // Show court name input if not saved yet
+          document.getElementById("courtNameDiv").style.display = "block";
+        }
       } else {
+        // User logged out
         document.getElementById("loginBtn").style.display = "block";
+        document.getElementById("userInfo").style.display = "none";
         document.getElementById("courtNameDiv").style.display = "none";
         document.getElementById("mainFeatures").style.display = "none";
+        document.getElementById("courtNameDisplay").style.display = "none";
       }
     });
 
-    // Save Court Name
+    // Save court name
     window.saveCourtName = async function() {
       const courtName = document.getElementById("courtNameInput").value.trim();
       const user = auth.currentUser;
@@ -98,13 +119,20 @@
           email: user.email,
           courtName: courtName
         });
+
+        // Hide input, show court name in top corner, show features
+        document.getElementById("courtNameDiv").style.display = "none";
+        document.getElementById("courtNameDisplay").textContent = courtName;
+        document.getElementById("courtNameDisplay").style.display = "block";
+        document.getElementById("mainFeatures").style.display = "block";
+
         alert("Court name saved successfully!");
       } else {
         alert("User not logged in!");
       }
     };
 
-    // Placeholder links for future pages
+    // Placeholder links
     document.getElementById("allCasesLink").onclick = () => alert("All Cases page coming soon");
     document.getElementById("orderSheetLink").onclick = () => alert("Order Sheet page coming soon");
     document.getElementById("noticeMakerLink").onclick = () => alert("Notice Maker page coming soon");
