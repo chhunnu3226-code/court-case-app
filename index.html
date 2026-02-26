@@ -4,35 +4,52 @@
   <title>Court Case Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+
 <body style="font-family: Arial; text-align:center; margin-top:100px;">
 
   <h1>Welcome to Court Case Manager</h1>
+
   <button onclick="login()" style="padding:10px 20px; font-size:16px;">
     Login with Google
   </button>
 
-  <!-- Firebase SDK -->
   <script type="module">
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyC4XtFoWYizUUVlhI5pQqwbxcxmjOwyWY0",
-    authDomain: "court-case-manager-99e61.firebaseapp.com",
-    projectId: "court-case-manager-99e61",
-    storageBucket: "court-case-manager-99e61.firebasestorage.app",
-    messagingSenderId: "446835586016",
-    appId: "1:446835586016:web:57083df006340ca4173185"
-  };
+    // Import Firebase App
+    import { initializeApp } 
+      from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
+    // Import Firebase Auth
+    import { getAuth, GoogleAuthProvider, signInWithPopup } 
+      from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "court-case-manager-99e61.firebaseapp.com",
+      projectId: "court-case-manager-99e61",
+      storageBucket: "court-case-manager-99e61.firebasestorage.app",
+      messagingSenderId: "446835586016",
+      appId: "1:446835586016:web:57083df006340ca4173185"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    // Setup Authentication
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // Login function
+    window.login = function() {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          alert("Login successful: " + result.user.email);
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
+    };
 
   </script>
 
