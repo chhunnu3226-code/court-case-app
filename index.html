@@ -3,21 +3,21 @@
 <head>
   <title>Court Case Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- CSS will be added later -->
+  <link rel="stylesheet" href="style.css"> <!-- External CSS -->
 </head>
 <body>
 
-  <!-- Top bar with user info -->
-  <div id="topBar" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #ccc;">
-    <div id="userInfo" style="display:none;">
-      <img id="userPhoto" src="" alt="User Photo" style="width:40px; height:40px; border-radius:50%; vertical-align:middle;">
-      <span id="userName" style="margin-left:10px; font-weight:bold;"></span>
+  <!-- Top bar -->
+  <div id="topBar">
+    <div id="userInfo">
+      <img id="userPhoto" src="" alt="User Photo">
+      <span id="userName"></span>
     </div>
-    <div id="courtNameDisplay" style="display:none; font-weight:bold;"></div>
+    <div id="courtNameDisplay"></div>
   </div>
 
-  <!-- Main content -->
-  <div style="text-align:center; margin-top:50px;">
+  <!-- Main container -->
+  <div class="container">
 
     <!-- Login Button -->
     <button id="loginBtn" onclick="login()">Login with Google</button>
@@ -28,16 +28,28 @@
       <button onclick="saveCourtName()">Save Court Name</button>
     </div>
 
-    <!-- Main Features -->
+    <!-- Features Links -->
     <div id="mainFeatures" style="display:none; margin-top:30px;">
-      <h2>Main Features</h2>
-      <a href="#" id="allCasesLink">All Cases (Excel Style)</a>
-      <a href="#" id="orderSheetLink">Order Sheet Maker</a>
+      <a href="#" id="allCasesLink">All Cases</a>
+      <a href="#" id="orderSheetLink">Order Sheet</a>
       <a href="#" id="noticeMakerLink">Notice Maker</a>
     </div>
+
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="#">Link 1</a>
+      <a href="#">Link 2</a>
+      <a href="#">Link 3</a>
+      <a href="#">Link 4</a>
+      <a href="#">Link 5</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 Court Case Manager | All rights reserved</div>
+  </footer>
+
+  <!-- Firebase and JS -->
   <script type="module">
     import { initializeApp } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
@@ -46,7 +58,6 @@
     import { getFirestore, doc, setDoc, getDoc } 
       from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyC4XtFoWYizUUVlhI5pQqwbxcxmjOwyWY0",
       authDomain: "court-case-manager-99e61.firebaseapp.com",
@@ -56,13 +67,12 @@
       appId: "1:446835586016:web:57083df006340ca4173185"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // Login Function
+    // Login
     window.login = function() {
       signInWithPopup(auth, provider)
         .then((result) => {
@@ -73,29 +83,25 @@
         });
     };
 
-    // Show user info after login
+    // Handle auth state
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
+      if(user){
         document.getElementById("loginBtn").style.display = "none";
-
-        // Show user name & photo
         document.getElementById("userInfo").style.display = "flex";
         document.getElementById("userName").textContent = user.displayName;
         document.getElementById("userPhoto").src = user.photoURL;
 
-        // Check if court name already exists in Firestore
-        const docRef = doc(db, "users", user.uid);
+        // Check Firestore for saved court name
+        const docRef = doc(db,"users",user.uid);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().courtName) {
+        if(docSnap.exists() && docSnap.data().courtName){
           document.getElementById("courtNameDisplay").textContent = docSnap.data().courtName;
           document.getElementById("courtNameDisplay").style.display = "block";
-          document.getElementById("mainFeatures").style.display = "block";
+          document.getElementById("mainFeatures").style.display = "flex";
         } else {
-          // Show court name input if not saved yet
           document.getElementById("courtNameDiv").style.display = "block";
         }
       } else {
-        // User logged out
         document.getElementById("loginBtn").style.display = "block";
         document.getElementById("userInfo").style.display = "none";
         document.getElementById("courtNameDiv").style.display = "none";
@@ -104,40 +110,34 @@
       }
     });
 
-    // Save court name
-    window.saveCourtName = async function() {
+    // Save Court Name
+    window.saveCourtName = async function(){
       const courtName = document.getElementById("courtNameInput").value.trim();
       const user = auth.currentUser;
-
-      if (!courtName) {
+      if(!courtName){
         alert("Please enter court name");
         return;
       }
-
-      if (user) {
-        await setDoc(doc(db, "users", user.uid), {
+      if(user){
+        await setDoc(doc(db,"users",user.uid),{
           email: user.email,
           courtName: courtName
         });
-
-        // Hide input, show court name in top corner, show features
         document.getElementById("courtNameDiv").style.display = "none";
         document.getElementById("courtNameDisplay").textContent = courtName;
         document.getElementById("courtNameDisplay").style.display = "block";
-        document.getElementById("mainFeatures").style.display = "block";
-
+        document.getElementById("mainFeatures").style.display = "flex";
         alert("Court name saved successfully!");
       } else {
         alert("User not logged in!");
       }
     };
 
-    // Placeholder links
-    document.getElementById("allCasesLink").onclick = () => alert("All Cases page coming soon");
-    document.getElementById("orderSheetLink").onclick = () => alert("Order Sheet page coming soon");
-    document.getElementById("noticeMakerLink").onclick = () => alert("Notice Maker page coming soon");
+    // Placeholder feature links
+    document.getElementById("allCasesLink").onclick = ()=>alert("All Cases coming soon");
+    document.getElementById("orderSheetLink").onclick = ()=>alert("Order Sheet coming soon");
+    document.getElementById("noticeMakerLink").onclick = ()=>alert("Notice Maker coming soon");
 
   </script>
-
 </body>
 </html>
