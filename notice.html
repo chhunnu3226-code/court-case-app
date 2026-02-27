@@ -9,7 +9,7 @@
 
   <!-- Top bar -->
   <div id="topBar">
-    <div id="userInfo">
+    <div id="userInfo" style="display:none;">
       <img id="userPhoto" src="" alt="User Photo">
       <span id="userName"></span>
     </div>
@@ -19,12 +19,10 @@
   <!-- Main container -->
   <div class="container">
     <h2>Notice Maker</h2>
-
-    <!-- Instructions -->
     <p>Select a notice type to generate:</p>
 
     <!-- Notice buttons -->
-    <div id="noticeOptions" style="display:flex; flex-direction:column; align-items:center;">
+    <div id="noticeOptions" style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:20px;">
       <button onclick="goToNotice('vadi.html')">Vadi Notice</button>
       <button onclick="goToNotice('vipakshi.html')">Vipakshi Notice</button>
       <button onclick="goToNotice('summon.html')">Summon</button>
@@ -35,7 +33,6 @@
       <button onclick="goToNotice('jamin.html')">Notice to Jamin</button>
       <button onclick="goToNotice('lok-adalat.html')">Lok Adalat Notice</button>
     </div>
-
   </div>
 
   <!-- Footer -->
@@ -47,7 +44,9 @@
       <a href="#">Link 4</a>
       <a href="#">Link 5</a>
     </div>
-    <div class="footer-copy">&copy; 2026 Court Case Manager | All rights reserved</div>
+    <div class="footer-copy">
+      &copy; 2026 Court Case Manager | All rights reserved
+    </div>
   </footer>
 
   <!-- Firebase + JS -->
@@ -78,23 +77,28 @@
         document.getElementById("userInfo").style.display = "flex";
         document.getElementById("userName").textContent = user.displayName;
 
-        // Fetch court name
+        if(user.photoURL){
+          document.getElementById("userPhoto").src = user.photoURL;
+        }
+
         const docRef = doc(db,"users",user.uid);
         const docSnap = await getDoc(docRef);
+
         if(docSnap.exists() && docSnap.data().courtName){
-          document.getElementById("courtNameDisplay").textContent = docSnap.data().courtName;
+          document.getElementById("courtNameDisplay").textContent =
+            docSnap.data().courtName;
         }
+
       } else {
-        alert("User not logged in! Redirecting to main page.");
-        // window.location.href = "index.html"; // Uncomment later
+        window.location.href = "index.html";
       }
     });
 
-    // Go to individual notice page
-    function goToNotice(page){
-      alert("Going to " + page); // Placeholder, later replace with:
-      // window.location.href = page;
-    }
+    // Proper redirect function
+    window.goToNotice = function(page){
+      window.location.href = page;
+    };
+
   </script>
 
 </body>
