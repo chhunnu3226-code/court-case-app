@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lok Adalat Scanned</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- Tesseract -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Lok Adalat - Scanned Challan System</h2>
+
+  <input type="file" id="pdfUpload" accept="application/pdf">
+  <p id="pageCount"></p>
+  <p><strong>Batch ID:</strong> <span id="batchId"></span></p>
+
+  <button id="startBtn" disabled>Start Processing</button>
+
+  <div id="progressSection" style="display:none;">
+    <p id="progressText"></p>
+    <div class="progress-bar-container">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+
+  <div id="previewSection" style="display:none;">
+    <h3>Preview & Edit</h3>
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>Challan No</th>
+          <th>Vehicle No</th>
+          <th>Name</th>
+          <th>Father/Husband</th>
+          <th>Address</th>
+          <th>Police Station</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button id="generateBtn">Generate & Save</button>
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, collection, addDoc } 
+from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const pdfUpload = document.getElementById("pdfUpload");
+const pageCountText = document.getElementById("pageCount");
+const startBtn = document.getElementById("startBtn");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+const progressSection = document.getElementById("progressSection");
+const resultTable = document.querySelector("#resultTable tbody");
+const previewSection = document.getElementById("previewSection");
+const generateBtn = document.getElementById("generateBtn");
+
+let pdfDoc = null;
+let totalPages = 0;
+let batchId = "";
+let extractedData = [];
+
+pdfUpload.addEventListener("change", async function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function() {
+    const typedarray = new Uint8Array(this.result);
+    pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
+    totalPages = pdfDoc.numPages;
+    pageCountText.textContent = "Total Pages: " + totalPages;
+    generateBatchId();
+    startBtn.disabled = false;
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function generateBatchId() {
+  const now = new Date();
+  batchId = "LA-" + now.getFullYear() + 
+            (now.getMonth()+1) + 
+            now.getDate() + "-" + 
+            Math.floor(Math.random()*1000);
+  document.getElementById("batchId").textContent = batchId;
+}
+
+startBtn.addEventListener("click", async function() {
+  progressSection.style.display = "block";
+  extractedData = [];
+  await processPages();
+  buildTable();
+  previewSection.style.display = "block";
+});
+
+async function processPages() {
+  let processed = 0;
+
+  for (let i = 1; i <= totalPages; i+=3) {
+    let promises = [];
+    for (let j = i; j < i+3 && j <= totalPages; j++) {
+      promises.push(processSinglePage(j));
+    }
+    const results = await Promise.all(promises);
+    extractedData.push(...results);
+    processed += results.length;
+    updateProgress(processed);
+  }
+}
+
+function updateProgress(processed) {
+  const percent = Math.round((processed/totalPages)*100);
+  progressBar.style.width = percent + "%";
+  progressText.textContent = "Processing " + processed + " / " + totalPages;
+}
+
+async function processSinglePage(pageNum) {
+  const page = await pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({scale:1.5});
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await page.render({canvasContext:context, viewport}).promise;
+
+  const { data: { text } } = await Tesseract.recognize(canvas, 'eng+hin');
+
+  return extractFields(text);
+}
+
+function extractFields(text) {
+  const lines = text.split("\n");
+  let challan="", vehicle="", name="", father="", address="", ps="";
+
+  lines.forEach(line => {
+    const l = line.toLowerCase();
+
+    if (!challan && l.includes("challan")) challan = line.split(":").pop().trim();
+    if (!vehicle && l.includes("vehicle")) vehicle = line.split(":").pop().trim();
+    if (!name && (l.includes("name") || l.includes("accused"))) name = line.split(":").pop().trim();
+    if (!father && (l.includes("father") || l.includes("s/o") || l.includes("w/o"))) father = line.split(":").pop().trim();
+    if (l.includes("address") || l.includes("r/o")) address += " " + line.split(":").pop().trim();
+    if (!ps && (l.includes("police station") || l.includes("ps") || l.includes("थाना"))) ps = line.split(":").pop().trim();
+  });
+
+  address = address.replace(/\s+/g," ").trim();
+
+  return {challan, vehicle, name, father, address, ps};
+}
+
+function buildTable() {
+  resultTable.innerHTML="";
+  extractedData.forEach((row,index)=>{
+    const tr = document.createElement("tr");
+
+    Object.values(row).forEach(value=>{
+      const td = document.createElement("td");
+      td.contentEditable = true;
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+
+    resultTable.appendChild(tr);
+  });
+}
+
+generateBtn.addEventListener("click", async function() {
+
+  const rows = resultTable.querySelectorAll("tr");
+
+  for (let row of rows) {
+    const cells = row.querySelectorAll("td");
+    const data = {
+      batchId,
+      category:"Lok Adalat Scanned",
+      challanNo: cells[0].innerText,
+      vehicleNo: cells[1].innerText,
+      name: cells[2].innerText,
+      fatherName: cells[3].innerText,
+      address: cells[4].innerText,
+      policeStation: cells[5].innerText,
+      createdAt: new Date()
+    };
+
+    await addDoc(collection(db,"cases"), data);
+  }
+
+  alert("Saved Successfully!");
+});
+
+</script>
+
+</body>
+</html>
